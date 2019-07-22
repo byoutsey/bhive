@@ -1,0 +1,1162 @@
+============Starting PS-7
+--------------------------20190711
+#working dir
+/projects/bgmp/byoutsey/ps7
+
+
+#downloading fastas
+wget ftp://ftp.ensembl.org/pub/release-97/fasta/danio_rerio/pep//Danio_rerio.GRCz11.pep.all.fa.gz
+wget ftp://ftp.ensembl.org/pub/release-97/fasta/homo_sapiens/pep//Homo_sapiens.GRCh38.pep.all.fa.gz
+
+#saved as
+Danio_rerio.GRCz11.pep.all.fa.gz
+Homo_sapiens.GRCh38.pep.all.fa.gz
+
+#tsv's from Biomart
+human_table.tsv
+zebra_table.tsv
+
+#python script to find longest sequence for gene
+`longest_records.py`
+
+#making test file
+head Homo_sapiens.GRCh38.pep.all.fa > test.fa
+
+
+===========Starting PS-8
+-------------------------20190715
+#working directory
+/projects/bgmp/byoutsey/Bi621/PS8/
+
+#linking fastq's to working directory
+ln -s /projects/bgmp/shared/Bi621/dre_WT_ovar12_R2.qtrim.fq.gz
+
+#Downloaded zebra fish fastas and gtf to directory `dre`
+
+/projects/bgmp/byoutsey/Bi621/PS8/dre
+Danio_rerio.GRCz11.97.gtf.gz
+Danio_rerio.GRCz11.dna.chromosome.10.fa.gz
+Danio_rerio.GRCz11.dna.chromosome.11.fa.gz
+Danio_rerio.GRCz11.dna.chromosome.12.fa.gz
+Danio_rerio.GRCz11.dna.chromosome.13.fa.gz
+Danio_rerio.GRCz11.dna.chromosome.14.fa.gz
+Danio_rerio.GRCz11.dna.chromosome.15.fa.gz
+Danio_rerio.GRCz11.dna.chromosome.16.fa.gz
+Danio_rerio.GRCz11.dna.chromosome.17.fa.gz
+Danio_rerio.GRCz11.dna.chromosome.18.fa.gz
+Danio_rerio.GRCz11.dna.chromosome.19.fa.gz
+Danio_rerio.GRCz11.dna.chromosome.1.fa.gz
+Danio_rerio.GRCz11.dna.chromosome.20.fa.gz
+Danio_rerio.GRCz11.dna.chromosome.21.fa.gz
+Danio_rerio.GRCz11.dna.chromosome.22.fa.gz
+Danio_rerio.GRCz11.dna.chromosome.23.fa.gz
+Danio_rerio.GRCz11.dna.chromosome.24.fa.gz
+Danio_rerio.GRCz11.dna.chromosome.25.fa.gz
+Danio_rerio.GRCz11.dna.chromosome.2.fa.gz
+Danio_rerio.GRCz11.dna.chromosome.3.fa.gz
+Danio_rerio.GRCz11.dna.chromosome.4.fa.gz
+Danio_rerio.GRCz11.dna.chromosome.5.fa.gz
+Danio_rerio.GRCz11.dna.chromosome.6.fa.gz
+Danio_rerio.GRCz11.dna.chromosome.7.fa.gz
+Danio_rerio.GRCz11.dna.chromosome.8.fa.gz
+Danio_rerio.GRCz11.dna.chromosome.9.fa.gz
+
+#fastas must be unziped
+gunzip dre/*
+
+#Building STAR DATABASE
+build_database.sh
+
+#!/usr/bin/env bash
+conda deactivate
+conda deactivate
+conda deactivate
+conda deactivate
+conda deactivate
+conda activate bgmp_py3
+/usr/bin/time -v STAR --runMode genomeGenerate --runThreadN 7 --genomeDir STAR2.7.1a_database_97_Danio_rerio.GRCz11 --genomeFastaFiles ./dre/* --sjdbGTFfile Danio_rerio.GRCz11.97.gtf
+
+#output directory
+STAR2.7.1a_database_97_Danio_rerio.GRCz11
+
+#Clock output
+Percent of CPU this job got: 97%
+Elapsed (wall clock) time (h:mm:ss or m:ss): 0:50.01
+Maximum resident set size (kbytes): 4301432
+Exit status: 0
+
+#Mapping reads to DATABASE
+#!/usr/bin/env bash
+conda deactivate
+conda deactivate
+conda deactivate
+conda deactivate
+conda deactivate
+conda activate bgmp_py3
+/usr/bin/time -v STAR --runMode alignReads --outFilterMultimapNmax 3 --outSAMunmapped Within KeepPairs --alignIntronMax 1000000 --readFilesCommand zcat --readFilesIn dre_WT_ovar12_R1.qtrim.fq.gz dre_WT_ovar12_R2.qtrim.fq.gz --genomeDir STAR2.7.1a_database_97_Danio_rerio.GRCz11 --outFileNamePrefix dre_mapped
+
+#outputFile
+dre_mappedAligned.out.sam
+
+Percent of CPU this job got: 97%
+Elapsed (wall clock) time (h:mm:ss or m:ss): 28:50.22
+Maximum resident set size (kbytes): 14358136
+Exit status: 0
+
+
+#convert sam to bam `sam2bam.sh`
+#!/bin/bash
+conda deactivate
+conda deactivate
+conda deactivate
+conda deactivate
+conda deactivate
+conda deactivate
+conda activate bgmp_py3
+
+samtools view -b -o dre_mappedAligned.out.bam -@ 7 dre_mappedAligned.out.sam
+
+ #output
+ dre_mappedAligned.out.bam
+
+ Percent of CPU this job got: 442%
+ Elapsed (wall clock) time (h:mm:ss or m:ss): 0:38.13
+ Maximum resident set size (kbytes): 13620
+ Exit status: 0
+
+
+ #Filter chromosome 1
+
+#Not sure what chromosome 1 is classified as in RNAME (3rd column)
+#added header to SAM file to check names by adding --outSAMheaderHD to the end of `align.sh`
+@SQ	SN:10	LN:45420867
+@SQ	SN:11	LN:45484837
+@SQ	SN:12	LN:49182954
+@SQ	SN:13	LN:52186027
+@SQ	SN:14	LN:52660232
+@SQ	SN:15	LN:48040578
+@SQ	SN:16	LN:55266484
+@SQ	SN:17	LN:53461100
+@SQ	SN:18	LN:51023478
+@SQ	SN:19	LN:48449771
+@SQ	SN:1	LN:59578282
+@SQ	SN:20	LN:55201332
+@SQ	SN:21	LN:45934066
+@SQ	SN:22	LN:39133080
+@SQ	SN:23	LN:46223584
+@SQ	SN:24	LN:42172926
+@SQ	SN:25	LN:37502051
+@SQ	SN:2	LN:59640629
+@SQ	SN:3	LN:62628489
+@SQ	SN:4	LN:78093715
+@SQ	SN:5	LN:72500376
+@SQ	SN:6	LN:60270059
+@SQ	SN:7	LN:74282399
+@SQ	SN:8	LN:54304671
+@SQ	SN:9	LN:56459846
+
+#Has to be SN:1 Chromosomes are 1-25
+
+============Starting PS-6
+-------------------------20190717
+/Users/brettyoutsey/Documents/BIO/ps6-byoutsey
+
+#downloaded contig file
+`contigs.fa` from talapas: `/projects/bgmp/shared/Bi621/`
+
+#generated test file
+head -44 contigs.fa > test.fa
+`test.fa`
+#Three full records:
+#Node_1
+Kcnt = 1154
+Estimated_len: 1154 + 49 -1 = 1202
+Real_len: 1223
+
+#Node_2
+Kcnt = 822
+Estimated_len: 870
+Real Len: 884
+
+#Node_3
+Kcnt = 237
+Est len = 285
+Real len= 289
+
+#expected output:
+`expected_output.txt`
+Statistics for test.fa
+Number of Contigs:  3
+Max Contig Length:  1202
+Mean Length:  785
+Total Length:  2357
+N50:  1202
+
+#output of `test.fa` through `evaluate_by_estimation.py`
+Statistics for test.fa
+Number of Contigs:  3
+Max Contig Length:  1202
+Mean Length:  785
+Total Length:  2357
+N50:  1202
+
+#PART 2 Script to extract and calculate contig values
+
+`evaluate_by_estimation.py`
+------------------------------------------------------
+#!/usr/bin/env python
+import argparse
+import matplotlib.pyplot as plt
+def get_args():
+	parser = argparse.ArgumentParser(description="A program to introduce yourself")
+	parser.add_argument("-f", "--filename", help="name of input file", required=True)
+	return parser.parse_args()
+
+args = get_args()
+inFile = args.filename
+
+with open(inFile, "r") as contigs:
+    import re
+    contig_lengths = []
+    coverages = []
+    contig_count = 0
+    for line in contigs:
+        #Extract kmer-length and coverage from hear lines
+        if line[0] == ">":
+            contig_count += 1
+            numbers = re.findall(r"[0-9.]+", line)
+            klen = numbers[1]
+            coverage = numbers[2]
+            estimated_len = 49+int(klen)-1
+            contig_lengths.append(estimated_len)
+            coverages.append(float(coverage))
+
+    max_contig_len = max(contig_lengths)
+    mean_contig_len = sum(contig_lengths)/(len(contig_lengths))
+    total_genome_len = sum(contig_lengths)
+    mean_coverage = sum(coverages)/(len(coverages))
+
+#CALCULATING N50
+contig_lengths.sort()
+runningSum = 0
+half_genome_len = int(total_genome_len/2)
+
+#Iterate through all contig lengths to populate buckets and calculate N50
+for lenIndex in range(len(contig_lengths)):
+    current_len = contig_lengths[lenIndex]
+    runningSum += current_len
+
+    if runningSum >= half_genome_len:
+        N50 = current_len
+        break
+
+#ASSIGNING LENGTHS TO BUCKETS
+bucket_dict = dict()
+bucket_array = []
+
+#Initialize keys for bucket_dict as length, set values (counts) to zero
+for alength in range(0,max_contig_len+100,100):
+    bucket_dict.setdefault(alength, 0)
+    bucket_array.append(alength)
+#index for the bucket array
+bucket_count = 0
+for lenIndex in range(len(contig_lengths)):
+    current_len = contig_lengths[lenIndex]
+    if current_len <= bucket_array[bucket_count]:
+        #contig length is within the bucket increase count in dictionary
+        bucket_dict[bucket_array[bucket_count]] += 1
+    else:
+        #increase the bucket until the value the contig lenght fits
+        while(current_len > bucket_array[bucket_count]):
+            bucket_count += 1
+        #increase count in dictionary
+        bucket_dict[bucket_array[bucket_count]] += 1
+print("Statistics for "+ inFile)
+print("Number of Contigs: ", contig_count)
+print("Max Contig Length: ", max_contig_len)
+print("Mean Length: ", int(mean_contig_len))
+print("Total Length: ", total_genome_len)
+print("N50: ", N50)
+
+#I'm not printing all of this bucket shit just graphing
+#Plot buckets from bucket_dict
+plt.plot(list(bucket_dict.keys()), list(bucket_dict.values()))
+plt.xlabel("Contig Length")
+plt.ylabel("Number of Contigs")
+plt.title(inFile)
+plt.savefig(inFile + ".png")
+
+---------------------------------------------------
+#works
+
+==================Resuming PS-6
+----------------------------------20190718
+#PART 2
+
+/projects/bgmp/byoutsey/Bi621/PS6
+
+ln -s /projects/bgmp/shared/Bi621/800_3_PE5_interleaved.fq.unmatched
+ln -s /projects/bgmp/shared/Bi621/800_3_PE5_interleaved.fq_1
+ln -s /projects/bgmp/shared/Bi621/800_3_PE5_interleaved.fq_2
+
+
+#a.
+#nt in fosmid library (G):
+50*40 Kb = 2000 kb
+
+#b.
+#calculate expected coverage
+COVERAGE = N * L/G
+
+N: # of reads
+L: read len
+G: Genome len
+
+###Calculate total nt in reads
+#Combine fq files
+cat *.fq* > combined.fq
+
+#tally sequence lengths and record count (N)
+`fq_seq_len.sh`
+with open("combined.fq", "r") as file:
+  sequence_count =0
+  read_count = 0
+  len_sum =0
+  for line in file:
+    if sequence_count == 1:
+      len_sum += len(line.strip())
+      read_count +=1
+    if sequence_count == 3:
+      sequence_count =0
+    else:
+      sequence_count +=1
+  print("Total nts: ",len_sum)
+  print("# of Reads: ", read_count)
+
+#OUTPUT:
+Total nts:  197182599
+# of Reads:  2567781 (N)
+
+#calulate Lmean (L)
+total nts/ N = 76.79
+
+C = 2567781 * 76.79 / 2000000 = 98.59
+
+#c. Calculate kmer coverage
+
+Ck = C * (Lmean - K + 1)/ Lmean
+
+#if kmer size is 31:
+Ck = 98.59 * (76.79 - 31 + 1)/ 76.79 = 60
+
+#if kmer size is 41:
+Ck = 98.59 * (76.79 - 41 + 1)/ 76.79 = 47
+
+#if kmer size is 49:
+Ck = 98.59 * (76.79 - 49 + 1)/ 76.79 = 37
+
+
+=========Continuing PS7
+
+#header for fasta record
+>ENSP00000451042.1 pep chromosome:GRCh38:14:22438547:22438554:1 gene:ENSG00000223997.1 transcript:ENST00000415118.1
+
+#not sure whether correct gene Id is ENSG00000223997.1 or ENSG00000223997 going with ENSG00000223997 for now
+
+
+#!/usr/bin/env python
+import re
+#dictionary to hold gene ID as key and an array as value.
+#The array contains the seq_sum and a string for the FASTA record
+gene_dict = dict()
+file = "test.fa"
+
+
+`longest_records.py`
+-----------------------------------------------
+def gene_dict_insert(key, value, record):
+    #
+    if key in gene_dict:
+        #change record if length is greater
+        if gene_dict[key][0] < value:
+            gene_dict[key] = [value, record ]
+    else:
+        gene_dict.setdefault(gene_name, [rec_sum,fasta_record])
+
+with open(file, "r") as input:
+    for line in input:
+        if line[0] == ">":
+            #ENCOUNTERED NEW HEADER (PREVIOUS RECORD DONE)
+            #add to dict if not first record
+            try:
+                gene_dict_insert(gene_name, rec_sum, fasta_record)
+            except:
+                pass
+
+            #Extract gene name from header line
+            fasta_record = line
+            ID = re.findall(r"gene:[A-Z]+[0-9]+", line)
+            gene_name = ID[0][5:]
+            rec_sum = 0
+        else:
+            #add length of row to total sum for record
+            fasta_record += line
+            rec_sum += len(line.strip())
+    gene_dict_insert(gene_name, rec_sum, fasta_record)
+for key_array in gene_dict.values():
+    aString = key_array[1]
+    #prints everything but the \n at the end of each recrod
+    print(aString[:-1])
+----------------------------------
+./longest_records.py > longest_Homo_sapiens.GRCh38.pep.all.fa
+
+#Needed to change the file in python script to ouput files:
+`longest_Danio_rerio.GRCz11.pep.all.fa`
+`longest_Homo_sapiens.GRCh38.pep.all.fa`
+
+#building BLAST database
+`buildDatabase.srun`
+
+#!/bin/bash
+#SBATCH --account=bgmp          ### SLURM account which will be charged for the job
+#SBATCH --partition=bgmp        ### Partition (like a queue in PBS)
+#SBATCH --job-name=blast      ### Job Name
+#SBATCH --output=Hi.out         ### File in which to store job output
+#SBATCH --time=0-00:01:00       ### Wall clock time limit in Days-HH:MM:SS
+#SBATCH --nodes=1               ### Node count required for the job
+#SBATCH --ntasks-per-node=1     ### Nuber of tasks to be launched per Node
+#SBATCH --cpus-per-task=1       ### Number of cpus (cores) per task
+for sample in `ls longest*fa`;do /usr/bin/time -v makeblastdb -dbtype 'prot' -in $sample ; done
+----------------------------------------------------
+
+#OUTPUTS
+#longest_Danio_rerio.GRCz11.pep.all.fa
+Building a new DB, current time: 07/18/2019 16:35:20
+New DB name:   /gpfs/projects/bgmp/byoutsey/Bi621/PS7/longest_Danio_rerio.GRCz11.pep.all.fa
+New DB title:  longest_Danio_rerio.GRCz11.pep.all.fa
+Sequence type: Protein
+Keep Linkouts: T
+Keep MBits: T
+Maximum file size: 1000000000B
+Adding sequences from FASTA; added 30313 sequences in 0.899582 seconds.
+	Command being timed: "makeblastdb -dbtype prot -in longest_Danio_rerio.GRCz11.pep.all.fa"
+
+	Percent of CPU this job got: 90%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.93
+	Maximum resident set size (kbytes): 11480
+	Exit status: 0
+
+#longest_Homo_sapiens.GRCh38.pep.all.fa
+Building a new DB, current time: 07/18/2019 16:35:21
+New DB name:   /gpfs/projects/bgmp/byoutsey/Bi621/PS7/longest_Homo_sapiens.GRCh38.pep.all.fa
+New DB title:  longest_Homo_sapiens.GRCh38.pep.all.fa
+Sequence type: Protein
+Keep Linkouts: T
+Keep MBits: T
+Maximum file size: 1000000000B
+Adding sequences from FASTA; added 23395 sequences in 0.707524 seconds.
+	Command being timed: "makeblastdb -dbtype prot -in longest_Homo_sapiens.GRCh38.pep.all.fa"
+
+	Percent of CPU this job got: 86%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.74
+	Maximum resident set size (kbytes): 11520
+	Exit status: 0
+-----------------------------------------
+
+-----------------20190719
+==========Continuing PS6
+#RUN Velvet script
+`velvet_hg_kmers.sh`
+---------------------------------
+#!/bin/bash
+conda deactivate
+conda deactivate
+conda deactivate
+conda deactivate
+conda activate bgmp_py3
+
+velveth velveth_31 31 -fastq 800_3_PE5_interleaved.fq.unmatched -short -fastq 800_3_PE5_interleaved.fq_1 -short2 800_3_PE5_interleaved.fq_2
+velvetg velveth_31
+
+
+velveth velveth_41 41 -fastq 800_3_PE5_interleaved.fq.unmatched -short -fastq 800_3_PE5_interleaved.fq_1 -short2 800_3_PE5_interleaved.fq_2
+velvetg velveth_41
+
+
+
+velveth velveth_49 49 -fastq 800_3_PE5_interleaved.fq.unmatched -short -fastq 800_3_PE5_interleaved.fq_1 -short2 800_3_PE5_interleaved.fq_2
+velvetg velveth_49
+
+-------------------------------------
+#Run Parameters
+#SBATCH --account=bgmp          ### SLURM account which will be charged for the job
+#SBATCH --partition=bgmp        ### Partition (like a queue in PBS)
+#SBATCH --job-name=assemble      ### Job Name
+#SBATCH --output=run.out         ### File in which to store job output
+#SBATCH --time=0-01:00:00       ### Wall clock time limit in Days-HH:MM:SS
+#SBATCH --nodes=1               ### Node count required for the job
+#SBATCH --ntasks-per-node=1     ### Nuber of tasks to be launched per Node
+#SBATCH --cpus-per-task=2       ### Number of cpus (cores) per task
+
+#output:
+Command being timed: "./velvet_hg_kmers.sh"
+Percent of CPU this job got: 162%
+Elapsed (wall clock) time (h:mm:ss or m:ss): 3:12.21
+Maximum resident set size (kbytes): 1099640
+Minor (reclaiming a frame) page faults: 2305877
+Voluntary context switches: 3320
+Involuntary context switches: 4663
+Exit status: 0
+
+#f. Use your code from Part 1 to collect assembly statistics on each result.
+
+#added second input to `evaluate_by_estimation.py`
+
+#parser.add_arguments("-o","--outname",help="name of output files",required=False)
+
+#function `summarize_initial_builds.sh` will run `evaluate_by_estimation.py` on all three assemblies
+
+#!/bin/bash
+./evaluate_by_estimation.py -f velveth_31/contigs.fa -o kmer_coverage_31
+./evaluate_by_estimation.py -f velveth_41/contigs.fa -o kmer_coverage_41
+./evaluate_by_estimation.py -f velveth_49/contigs.fa -o kmer_coverage_49
+
+./summarize_initial_builds.sh
+
+#output:
+Statistics for kmer_coverage_31
+Number of Contigs:  12123
+Max Contig Length:  4077
+Mean Length:  199
+Total Length:  2424472
+N50:  265
+
+Statistics for kmer_coverage_41
+Number of Contigs:  5429
+Max Contig Length:  7451
+Mean Length:  331
+Total Length:  1800661
+N50:  783
+
+Statistics for kmer_coverage_49
+Number of Contigs:  3215
+Max Contig Length:  6320
+Mean Length:  501
+Total Length:  1612162
+N50:  1059
+
+#outputFiles:
+kmer_coverage_31.png  kmer_coverage_41.png  kmer_coverage_49.png
+
+#4. With a k-mer size of 49, adjust the coverage cutoff to 20x, 60x, and ‘auto’.
+`build_diff_coverages.sh`
+#now the summary print out & graph filename/title will have custom name
+
+#!/bin/bash
+conda deactivate
+conda deactivate
+conda deactivate
+conda deactivate
+conda activate bgmp_py3
+
+velvetg velveth_49 -cov_cutoff 20
+./evaluate_by_estimation.py -f velveth_49/contigs.fa -o kmer_coverage_49_covCutoff_20
+velvetg velveth_49 -cov_cutoff 60
+./evaluate_by_estimation.py -f velveth_49/contigs.fa -o kmer_coverage_49_covCutoff_60
+velvetg velveth_49 -cov_cutoff auto
+./evaluate_by_estimation.py -f velveth_49/contigs.fa -o kmer_coverage_49_covCutoff_auto
+
+#Run parameters
+#SBATCH --account=bgmp          ### SLURM account which will be charged for the job
+#SBATCH --partition=bgmp        ### Partition (like a queue in PBS)
+#SBATCH --job-name=assemble      ### Job Name
+#SBATCH --output=run.out         ### File in which to store job output
+#SBATCH --time=0-01:00:00       ### Wall clock time limit in Days-HH:MM:SS
+#SBATCH --nodes=1               ### Node count required for the job
+#SBATCH --ntasks-per-node=1     ### Nuber of tasks to be launched per Node
+#SBATCH --cpus-per-task=2       ### Number of cpus (cores) per task
+
+#Output
+Statistics for kmer_coverage_49_covCutoff_20
+Number of Contigs:  1220
+Max Contig Length:  10467
+Mean Length:  915
+Total Length:  1116372
+N50:  1804
+
+Statistics for kmer_coverage_49_covCutoff_60
+Number of Contigs:  430
+Max Contig Length:  7268
+Mean Length:  928
+Total Length:  399253
+N50:  1990
+
+Statistics for kmer_coverage_49_covCutoff_auto
+Number of Contigs:  1334
+Max Contig Length:  10467
+Mean Length:  896
+Total Length:  1196354
+N50:  1796
+
+Percent of CPU this job got: 76%
+Elapsed (wall clock) time (h:mm:ss or m:ss): 0:16.45
+Maximum resident set size (kbytes): 472848
+Major (requiring I/O) page faults: 4
+Minor (reclaiming a frame) page faults: 647169
+Voluntary context switches: 4710
+Involuntary context switches: 55
+Exit status: 0
+
+#Output Files:
+kmer_coverage_49_covCutoff_20.png  kmer_coverage_49_covCutoff_auto.png  kmer_coverage_49_covCutoff_60.png
+
+#5. Finally, adjust the minimum contig length to 500bp (with k-mer size of 49 and coverage cutoff ‘auto’) and again, assay your results.
+`run_contig_len.sh`
+#!/bin/bash
+velvetg velveth_49 -cov_cutoff auto -min_contig_lgth 500
+./evaluate_by_estimation.py -f velveth_49/contigs.fa -o kmer_coverage_49_covCutoff_auto_minContig_500
+
+#Run Parameters
+Same as above in #3
+
+#Output:
+Statistics for kmer_coverage_49_covCutoff_auto_minContig_500
+Number of Contigs:  624
+Max Contig Length:  10467
+Mean Length:  1649
+Total Length:  1029411
+N50:  2044
+
+Command being timed: "./run_contig_len.sh"
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:04.08
+	Maximum resident set size (kbytes): 472860
+	Minor (reclaiming a frame) page faults: 208282
+	Exit status: 0
+
+#Output files
+kmer_coverage_49_covCutoff_auto_minContig_500.png
+
+
+
+===========PS7
+
+#Time out after 5hr WHAT BULLSHIT runninging blastp_two_fastas.srun again with 16hrs
+
+
+--------------------20190720
+#blastp_two_fastas.sh ran!
+
+User time (seconds): 49482.06
+System time (seconds): 76.24
+Percent of CPU this job got: 99%
+Elapsed (wall clock) time (h:mm:ss or m:ss): 13:47:55
+Maximum resident set size (kbytes): 711960
+Minor (reclaiming a frame) page faults: 37020288
+Voluntary context switches: 543
+Involuntary context switches: 20601
+Exit status: 0
+
+#Output file:
+`longest_Danio_Homo_alignments.tsv`
+
+
+#Python script for reciprocal best hits
+`recip_best.py`
+
+#test file for script
+`multi.test`
+
+ENSDARP00000117542.1	ENSP00000339881.4	22.27	256	165	10	176	408	112	356	3e-07	39.7
+ENSDARP00000117542.1	ENSP00000262715.5	26.18	233	152	9	173	402	2008	2223	1e-08	45.4
+ENSDARP00000117542.1	ENSP00000363308.3	22.18	239	143	11	122	346	101	310	1e-10	48.5
+ENSDARP00000117542.1	ENSP00000454783.1	23.92	209	149	6	164	368	73	275	1e-15	64.7
+ENSDARP00000117542.1	ENSP00000451211.1	31.76	85	54	2	225	308	167	248	8e-11	50.4
+ENSDARP00000117542.1	ENSP00000425008.1	28.03	157	93	7	257	412	150	287	2e-11	50.8
+ENSDARP00000117542.2	ENSP00000232564.3	32.91	158	92	6	193	349	157	301	9e-16	58.2
+ENSDARP00000117542.2	ENSP00000352820.4	30.15	136	88	4	192	326	204	333	4e-10	47.4
+ENSDARP00000117542.2	ENSP00000352820.4	28.45	116	80	3	231	346	13	125	1e-09	45.8
+ENSDARP00000117542.2	ENSP00000280190.4	28.57	217	130	6	95	306	489	685	9e-16	67.4
+
+#ENSDARP00000117542.1 should have a best hit at ENSP00000425008.1
+#ENSDARP00000117542.2 does not have reciprocal hits. It shouldn't be printed
+
+
+
+#script benchmark (NOT FINAL)
+#This prints lines of lowest escore for each unique query ID
+-------------------------------------
+#!/usr/bin/env python
+import re
+import csv
+
+#saves a file line as class with important attributes
+class aline:
+    def __init__(self, line):
+        #e value is separated down `e-` to be into two variables eval and power
+        self.escore = re.findall(r"([0-9]+)e-([0-9]+)", line[10])
+        self.eval = self.escore[0][0]
+        self.power = self.escore[0][1]
+        self.name = line[0]
+        self.match = line[1]
+        self.line = line
+
+with open("multi.test", "r") as file:
+
+    #csv defines each column in a array 0-11
+    file = csv.reader(file, delimiter='\t')
+    firstLine = True
+    for line in file:
+        newLine = aline(line)
+        if firstLine:
+            #Ensures the first line can enter the next condition and Initializes ID_eval_dict
+            prevLine = aline(line)
+            #Line with the lowest evalue
+            bestLine = aline(line)
+            firstLine = False
+
+
+        else:
+            #for the other 99.9999999999999999999%
+            if newLine.name == prevLine.name:
+                #no new query ID
+                #check if escore is lower starting with power comparison
+                if newLine.power >= bestLine.power:
+
+                    if newLine.power == bestLine.power:
+                        #evalues have same orders of magnitude
+                        if newLine.eval > bestLine.eval:
+                            #has to be larger escore change bestLine
+                            lowerValue = True
+                    else:
+                        #has to be larger escore change bestLine
+                        lowerValue = True
+
+                    if lowerValue:
+                        bestLine = aline(line)
+
+                #Assigns previous line to current line at end of tasks
+                prevLine = aline(line)
+
+            else:
+                #new queryID
+                print(bestLine.line)
+                prevLine = aline(line)
+                bestLine = aline(line)
+    print(bestLine.line)
+--------------------------------------
+
+
+#Now time to add RBH
+
+#FINAL VERSION
+#!/usr/bin/env python
+import re
+import csv
+
+#saves a file line as class with important attributes
+class aline:
+    def __init__(self, line):
+        #e value is separated down `e-` to be into two variables eval and power
+        self.escore = re.findall(r"([0-9]+)e-([0-9]+)", line[10])
+        self.eval = self.escore[0][0]
+        self.power = self.escore[0][1]
+        self.name = line[0]
+        self.match = line[1]
+        self.line = line
+
+with open("multi.test", "r") as file:
+
+    #csv defines each column in a array 0-11
+    file = csv.reader(file, delimiter='\t')
+    firstLine = True
+    for line in file:
+        newLine = aline(line)
+        if firstLine:
+            #Ensures the first line can enter the next condition and Initializes ID_eval_dict
+            prevLine = aline(line)
+            #Line with the lowest evalue
+            bestLine = aline(line)
+            firstLine = False
+            RBH = True
+
+
+        else:
+            #for the other 99.9999999999999999999%
+            if newLine.name == prevLine.name:
+                #no new query ID
+                #check if escore is lower starting with power comparison
+                if newLine.power >= bestLine.power:
+
+                    if newLine.power == bestLine.power:
+                        #evalues have same orders of magnitude
+                        if newLine.eval > bestLine.eval:
+                            #has to be larger escore change bestLine
+                            lowerValue = True
+                        elif newLine.eval == bestLine.eval:
+                            #Time to enforce RBH
+                            #Find out whether two best scores align to different genes
+
+                            if newLine.match != bestLine.match:
+                                #this will prevent bestLine from writing to output
+                                RBH = False
+                    else:
+                        #has to be larger escore change bestLine
+                        lowerValue = True
+
+                    if lowerValue:
+                        bestLine = aline(line)
+
+
+                #Assigns previous line to current line at end of tasks
+                prevLine = aline(line)
+
+            else:
+                #new queryID
+                #LAST CHANCE TO DO SOMETHING WITH VARIABLES FROM PREV ID
+                if RBH:
+                    print(bestLine.line)
+                prevLine = aline(line)
+                bestLine = aline(line)
+                RBH = True
+    if RBH:
+        print(bestLine.line)
+-----------------------------------
+
+#output for `multi.test`
+
+
+
+
+
+#Running `recip_best.py` on longest_Danio_Homo_alignments.tsv
+
+#SLURM `recip_best.srun`
+#!/bin/bash
+#SBATCH --account=bgmp          ### SLURM account which will be charged for the job
+#SBATCH --partition=bgmp        ### Partition (like a queue in PBS)
+#SBATCH --job-name=pyscript      ### Job Name
+#SBATCH --output=recip_best.out         ### File in which to store job output
+#SBATCH --time=0-03:00:00       ### Wall clock time limit in Days-HH:MM:SS
+#SBATCH --nodes=1               ### Node count required for the job
+#SBATCH --ntasks-per-node=1     ### Nuber of tasks to be launched per Node
+#SBATCH --cpus-per-task=1       ### Number of cpus (cores) per task
+/usr/bin/time -v ./recip_best.py
+
+#output
+
+Command being timed: "./recip_best.py"
+Percent of CPU this job got: 99%
+Elapsed (wall clock) time (h:mm:ss or m:ss): 0:15.27
+Maximum resident set size (kbytes): 10708
+Minor (reclaiming a frame) page faults: 3772
+Voluntary context switches: 69
+Involuntary context switches: 50
+Page size (bytes): 4096
+Exit status: 0
+
+#outputFile
+`best_rcp.tsv`
+
+#This file has the gene ID for zebra fish query & gene ID for homo Sapien genome
+wc -l best_rcp.tsv
+
+23571 best_rcp.tsv
+
+
+#Not sure how to add gene stable IDs to best_rcp.tsv all blastp can output is the gene stable ID
+#Guess I need to use the tables I downloaded
+
+
+-----------------------20190721
+==============Finishing ps7
+#To a file, output a tab-separated-value table of all RBH relationships with six columns: a. Human Gene ID, Human Protein ID, Human Gene Name, Zebrafish Gene ID, Zebrafish Protein ID, Zebrafish Gene Name
+#script to iterate through `best_rcp.tsv` `zebra_table.tsv` & `human_table.tsv`
+
+`add_gene_IDs.py`
+-----------------
+#!/usr/bin/env python
+import csv
+
+match_dict = dict()
+
+with open("zebra_table.tsv", "r") as zebra_file, open("human_table.tsv", "r") as human_file:
+    #Make two dictionaries of protein ID as key with rest of names as value for human and zebra
+    zebra_file = csv.reader(zebra_file, delimiter="\t")
+    human_file = csv.reader(human_file, delimiter="\t")
+
+    human_dict = dict()
+    zebra_dict = dict()
+    #Fill dictionaries with values from their respective tables:
+    for line in zebra_file:
+        protID = line[2]
+        geneID = line[0]
+        geneName = line[1]
+        zebra_dict.setdefault(protID,[geneID, geneName])
+
+    for line in human_file:
+        protID = line[2]
+        geneID = line[0]
+        geneName = line[1]
+        human_dict.setdefault(protID,[geneID, geneName])
+
+with open("best_rcp.tsv", "r") as rcp_file, open("best_rcp_complete.tsv", "w") as outfile:
+    rcp_file =csv.reader(rcp_file,delimiter="\t")
+    #Go through alignment file of RBH, if ID is in dictionaries add gene names to protein ID
+    for line in rcp_file:
+        #string that is a line in the outputFile containing both human and zebra data
+        outString= ""
+        zebra_ID = line[0][:-2]
+        human_ID = line[1][:-2]
+
+        if human_ID in human_dict
+            outString += human_dict[human_ID][0]+"\t"+human_ID+"\t"+human_dict[human_ID][1]+"\t"
+
+        if zebra_ID in zebra_dict:
+            outString += zebra_dict[zebra_ID][0]+"\t"+zebra_ID+"\t"+zebra_dict[zebra_ID][1]+"\n"
+
+        outfile.write(outString)
+------------------
+
+#test files
+`test_rcp.tsv`
+ENSDARP00000117542.1	ENSP00000253237.4
+ENSDARP00000119861.1	ENSP00000497225.1
+ENSDARP00000118897.2	ENSP00000301215.2
+ENSDARP00000101956.4	ENSP00000424361.1
+ENSDARP00000076885.4	ENSP00000305632.8
+ENSDARP00000129162.1	ENSP00000357301.3
+ENSDARP00000076882.5	ENSP00000419081.1
+ENSDARP00000106489.2	ENSP00000242462.4
+ENSDARP00000076873.4	ENSP00000247191.2
+ENSDARP00000147741.1	ENSP00000260408.3
+
+`test_zebra_table.tsv`
+Gene stable ID	Gene name	Protein stable ID
+ENSDARG00000063344	fam162a	ENSDARP00000076873
+ENSDARG00000063344	fam162a	ENSDARP00000117542
+ENSDARG00000097685	si:ch211-235i11.3	ENSDARP00000128236
+ENSDARG00000097685	si:ch211-235i11.3	ENSDARP00000140227
+ENSDARG00000036008	caly	ENSDARP00000113342
+ENSDARG00000069301	tmem177	ENSDARP00000091517
+ENSDARG00000069301	tmem177	ENSDARP00000134056
+ENSDARG00000104901	ostc	ENSDARP00000130235
+ENSDARG00000031836	vps37c	ENSDARP00000076882
+
+#lines 1-2 and last are matches
+
+#test output:
+
+ENSDARG00000063344	ENSDARP00000117542	fam162a
+ENSDARG00000031836	ENSDARP00000076882	vps37c
+ENSDARG00000063344	ENSDARP00000076873	fam162a
+
+#correct
+#Run script on complete files with SLURM
+#!/bin/bash
+#SBATCH --account=bgmp          ### SLURM account which will be charged for the job
+#SBATCH --partition=bgmp        ### Partition (like a queue in PBS)
+#SBATCH --job-name=pyscript      ### Job Name
+#SBATCH --output=recip_best.out         ### File in which to store job output
+#SBATCH --time=0-01:00:00       ### Wall clock time limit in Days-HH:MM:SS
+#SBATCH --nodes=1               ### Node count required for the job
+#SBATCH --ntasks-per-node=1     ### Nuber of tasks to be launched per Node
+#SBATCH --cpus-per-task=1       ### Number of cpus (cores) per task
+/usr/bin/time -v ./add_gene_IDs.py
+
+#output
+Command being timed: "./add_gene_IDs.py"
+Percent of CPU this job got: 90%
+Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.43
+Maximum resident set size (kbytes): 56376
+Minor (reclaiming a frame) page faults: 14380
+Page size (bytes): 4096
+Exit status: 0
+
+#output file:
+`best_rcp_complete.tsv`
+
+ wc -l best_rcp_complete.tsv
+23548 best_rcp_complete.tsv
+#wc is lower than input file some lines are lost
+#Adding else condition for alignments that don't match to table
+if human_ID in human_dict:
+    outString += human_dict[human_ID][0]+"\t"+human_ID+"\t"+human_dict[human_ID][1]+"\t"
+else:
+    #in case where there is no gene names for protein # ID
+    outString += "NA"+"\t"+human_ID+"\t"+"NA"+"\t"
+
+if zebra_ID in zebra_dict:
+    outString += zebra_dict[zebra_ID][0]+"\t"+zebra_ID+"\t"+zebra_dict[zebra_ID][1]+"\n"
+else:
+    outString+= "NA"+"\t"+zebra_ID+"\t"+"NA"+"\n"
+
+wc -l best_rcp_complete.tsv
+23571 best_rcp_complete.tsv
+#kept rows all data here now
+
+head best_rcp_complete.tsv
+ENSG00000105447	ENSP00000253237	GRWD1	ENSDARG00000015208	ENSDARP00000117542	rbb4l
+ENSG00000120265	ENSP00000497225	PCMT1	ENSDARG00000015201	ENSDARP00000119861	pcmt
+ENSG00000167625	ENSP00000301215	ZNF526	ENSDARG00000077143	ENSDARP00000118897	znf526
+ENSG00000164116	ENSP00000424361	GUCY1A1	ENSDARG00000077145	ENSDARP00000101956	adcy3a
+ENSG00000103942	ENSP00000305632	HOMER2	ENSDARG00000059349	ENSDARP00000076885	homer2
+ENSG00000173080	ENSP00000357301	RXFP4	ENSDARG00000059348	ENSDARP00000129162	rxfp3.3b
+ENSG00000129007	ENSP00000419081	CALML4	ENSDARG00000059347	ENSDARP00000076882	calml4b
+ENSG00000122859	ENSP00000242462	NEUROG3	ENSDARG00000016951	ENSDARP00000106489	neurog3
+ENSG00000126787	ENSP00000247191	DLGAP5	ENSDARG00000059340	ENSDARP00000076873	dlgap2a
+ENSG00000137845	ENSP00000260408	ADAM10	ENSDARG00000043213	ENSDARP00000147741	adam17a
+
+#looks good
+
+#Questions
+
+#calculate unique human proteins in output
+awk '{print $2}' best_rcp_complete.tsv | sort | uniq | wc -l
+10526
+
+#calculate number of all human proteins:
+awk '$0 ~/>/ {protCount +=1} END {print protCount}' longest_Homo_sapiens.GRCh38.pep.all.fa
+23395
+
+#calculate unique zebra proteins in output
+awk '{print $5}' best_rcp_complete.tsv | sort | uniq | wc -l
+23571
+
+#calculate number of all zebra proteins:
+awk '$0 ~/>/ {protCount +=1} END {print protCount}' longest_Danio_rerio.GRCz11.pep.all.fa
+30313
+
+#There are many repeats of human proteins. Which means a they are aligning to multiple zebrafish proteins
+#not RBH need to filter out repeats from file 'best_rcp_complete.tsv'
+
+
+#removed human repeats with the following bash script
+#!/bin/bash
+awk '{count[$2]++} END {for (word in count) {if(count[word] == 1) {print word}}}' best_rcp_complete.tsv > uniq_human
+for line in `cat uniq_human`; do grep $line best_rcp_complete.tsv >> true_RBH.tsv; done
+
+#Output
+Command being timed: "./remove_human_repeats.sh"
+Percent of CPU this job got: 99%
+Elapsed (wall clock) time (h:mm:ss or m:ss): 0:10.56
+Maximum resident set size (kbytes): 4672
+Minor (reclaiming a frame) page faults: 2181933
+Voluntary context switches: 10512
+Involuntary context switches: 2
+Page size (bytes): 4096
+Exit status: 0
+
+wc -l true_RBH.tsv
+5233 true_RBH.tsv
+
+#much smaller. Better! Hey I don't need to do those dumb commands anymore
+#5233 is the number of RBH proteins for both human and zebrafish
+
+
+=====================Finishing PS8
+#PART 2
+
+#Script: `parse.py`
+
+#!/usr/bin/env python
+import csv
+file = "example.sam"
+mappedCount = 0
+unmappedCount = 0
+with open(file, "r") as samFile:
+    samFile = csv.reader(samFile,delimiter="\t")
+    for line in samFile:
+        mapped = False
+        bitFlag = int(line[1])
+        if((bitFlag & 4) != 4):
+            mapped = True
+
+        if((bitFlag & 256) != 256):
+            if mapped:
+                mappedCount += 1
+            else:
+                unmappedCount += 1
+
+
+print("Mapped Reads: ", mappedCount)
+print("Unmapped Reads: ", unmappedCount)
+
+#SLURM
+#!/bin/bash
+#SBATCH --account=bgmp          ### SLURM account which will be charged for the job
+#SBATCH --partition=bgmp        ### Partition (like a queue in PBS)
+#SBATCH --job-name=BuildRef      ### Job Name
+#SBATCH --output=BuildRef.out         ### File in which to store job output
+#SBATCH --time=0-01:00:00       ### Wall clock time limit in Days-HH:MM:SS
+#SBATCH --nodes=1               ### Node count required for the job
+#SBATCH --ntasks-per-node=1     ### Nuber of tasks to be launched per Node
+#SBATCH --cpus-per-task=7       ### Number of cpus (cores) per task
+/usr/bin/time -v ./parse.py > parse.out
+
+#Output
+Command being timed: "./parse.py"
+Percent of CPU this job got: 99%
+Elapsed (wall clock) time (h:mm:ss or m:ss): 0:51.03
+Maximum resident set size (kbytes): 4756
+Minor (reclaiming a frame) page faults: 2622
+Page size (bytes): 4096
+Exit status: 0
+
+#output file `parse.out
+Mapped Reads:  21054806
+Unmapped Reads:  2442152`
+
+
+#8. Using samtools (enter samtools on the command line with no options to get a help screen), convert the SAM file to BAM format.
+#Sort it, and extract all reads from chromosome 1 into a new SAM file. Report how many reads are on chromosome 1.
+
+#Sort bam file `dre_mappedAligned.out.bam`
+samtools sort -@ 7 dre_mappedAligned.out.bam > sorted_dre_mappedAligned.bam
+
+#print only reads associated with reference 1
+samtools view sorted_dre_mappedAligned.bam 1 > chrom1.sam
+
+
+#put into script sort_extract1.sh
+
+#!/bin/bash
+conda deactivate
+conda deactivate
+conda deactivate
+conda deactivate
+conda deactivate
+conda activate bgmp_py3
+
+samtools sort -@ 7 dre_mappedAligned.out.bam > sorted_dre_mappedAligned.bam
+
+samtools view sorted_dre_mappedAligned.bam 1 > chrom1.sam
+
+#Run in SLURM
+#!/bin/bash
+#SBATCH --account=bgmp          ### SLURM account which will be charged for the job
+#SBATCH --partition=bgmp        ### Partition (like a queue in PBS)
+#SBATCH --job-name=sort_sep      ### Job Name
+#SBATCH --output=sort_sep.out         ### File in which to store job output
+#SBATCH --time=0-01:00:00       ### Wall clock time limit in Days-HH:MM:SS
+#SBATCH --nodes=1               ### Node count required for the job
+#SBATCH --ntasks-per-node=1     ### Nuber of tasks to be launched per Node
+#SBATCH --cpus-per-task=7       ### Number of cpus (cores) per task
+/usr/bin/time -v ./sort_extract1.sh
+
+#output
+Command being timed: "./sort_extract1.sh"
+	Percent of CPU this job got: 469%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:27.80
+	Maximum resident set size (kbytes): 6119040
+	Minor (reclaiming a frame) page faults: 87375
+	Voluntary context switches: 305098
+	Involuntary context switches: 307
+	Exit status: 0
+
+
+==============PS9
+
+#everything is in PS9.ipynb
+
+#for the challenge question. Trouble is I never got PS4 to work (entered infinite loop). which means numpy is infinitely faster than vanilla py
